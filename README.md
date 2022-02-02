@@ -1,7 +1,6 @@
 # Parrot
 
-This is a silly Discord bot that reacts to one-word messages with
-that message itself.
+This is a silly Discord bot that reacts to one-word messages with that message itself.
 
 ## Example
 
@@ -9,9 +8,31 @@ TODO
 
 ## Developer Notes
 
-* Define a `.dotenv` file with the following environment variables, and source it before running sbt locally.
+* Define a `.dotenv` file was follows:
 
 ```
 export PARROT_BOT_TOKEN=your bot token
+```
 
+* Then, source it, run `sbt`, and from its command line issue a `reStart` command:
+
+```bash
+longshorej@visions parrot % source .dotenv
+longshorej@visions parrot % sbt
+[info] welcome to sbt 1.5.2 (AdoptOpenJDK Java 11.0.11)
+[info] loading settings for project parrot-build from plugins.sbt ...
+[info] loading project definition from /Users/longshorej/work/parrot/project
+[info] loading settings for project parrot from build.sbt ...
+[info] set current project to parrot (in build file:/Users/longshorej/work/parrot/)
+[info] sbt server started at local:///Users/longshorej/.sbt/1.0/server/88e0ee16f07496fca839/sock
+[info] started sbt server
+sbt:parrot> reStart
+[info] Application parrot not yet started
+[info] Starting application parrot in the background ...
+parrot Starting parrot.Entrypoint.main()
+[success] Total time: 1 s, completed Feb 1, 2022, 9:04:39 PM
+parrot[ERROR] [AckCord-akka.actor.default-dispatcher-3] INFO akka.event.slf4j.Slf4jLogger - Slf4jLogger started
+parrot[ERROR] [guardian-akka.actor.default-dispatcher-3] INFO akka.event.slf4j.Slf4jLogger - Slf4jLogger started
+parrot[ERROR] [AckCord-akka.actor.default-dispatcher-3] INFO akka.actor.ActorSystemImpl - Got WS gateway: wss://gateway.discord.gg
+sbt:parrot> 
 ```
