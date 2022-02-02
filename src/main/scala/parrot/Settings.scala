@@ -6,7 +6,8 @@ object Settings {
   val ApiBaseUrl: String = "https://discord.com"
   val ApiVersion: Int = 9
   val BotToken: String = sys.env.getOrElse("PARROT_BOT_TOKEN", "xyz")
-  val LeetCharMappings: Map[Char, Char] = Map('l' -> '1', 'o' -> '0', 's' -> '5', 'e' -> '3')
+  val LeetCharMappings: Map[Char, Char] =
+    Map('l' -> '1', 'o' -> '0', 's' -> '5', 'e' -> '3')
   val CharMappings: Map[Char, List[String]] = Map(
     'a' -> List("\uD83C\uDDE6"),
     'b' -> List("\uD83C\uDDE7"),

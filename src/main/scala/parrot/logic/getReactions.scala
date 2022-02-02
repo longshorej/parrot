@@ -2,13 +2,15 @@ package parrot.logic
 
 import parrot.Settings
 
-/** The meat -- accepts messages that are plain text
- *  only, and responds with a collection of reactions.
- */
 object getReactions {
-  private val preparedMappings = Settings.CharMappings ++ Settings.LeetCharMappings.map { case (key, value) =>
-    key -> (Settings.CharMappings.getOrElse(key, Nil) ++ Settings.CharMappings.getOrElse(value, Nil))
-  }
+  private val preparedMappings =
+    Settings.CharMappings ++ Settings.LeetCharMappings.map {
+      case (key, value) =>
+        key -> (Settings.CharMappings.getOrElse(
+          key,
+          Nil
+        ) ++ Settings.CharMappings.getOrElse(value, Nil))
+    }
 
   def apply(message: String): List[String] =
     if (message.forall(isStrictlyAlphaNumericOrLimitedSymbolic))
@@ -25,8 +27,7 @@ object getReactions {
     if (message.length > Settings.TermMax || message.length < Settings.TermMin)
       List.empty
     else {
-      val result = message
-        .toLowerCase
+      val result = message.toLowerCase
         .foldLeft(preparedMappings -> List.empty[String]) {
           case (state @ (mappings, entries), char) =>
             mappings.get(char) match {
