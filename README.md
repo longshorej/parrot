@@ -4,7 +4,7 @@ This is a silly Discord bot that reacts to one-word messages with that message i
 
 ## Example
 
-TODO
+<img width="214" alt="Screen Shot 2022-02-01 at 9 36 50 PM" src="https://user-images.githubusercontent.com/515201/152089447-30c05444-c359-4838-8f1c-180f94908dc6.png">
 
 ## Developer Notes
 
