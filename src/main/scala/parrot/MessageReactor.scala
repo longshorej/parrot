@@ -22,12 +22,12 @@ object MessageReactor {
   def apply(client: DiscordClient): Behavior[Message] =
     handle(
       client = client,
-      waiting = Map.empty
+      waiting = Set.empty
     )
 
   private def handle(
       client: DiscordClient,
-      waiting: Map[MessageId, List[String]]
+      waiting: Set[MessageId]
   ): Behavior[Message] =
     Behaviors.setup[Message] { context =>
       implicit val ec: ExecutionContext = context.executionContext
@@ -47,6 +47,7 @@ object MessageReactor {
               s"cont - id=${message.message.id} remaining=$remaining"
             )
 
+            // @TODO future failure
             client.requestsHelper
               .run(message.message.createReaction(reaction))(
                 message.cache.current
@@ -57,8 +58,8 @@ object MessageReactor {
 
             Behaviors.same
 
-          case Message.Reacted(_, Nil) =>
-            Behaviors.same
+          case Message.Reacted(message, Nil) =>
+            handle(client, waiting - message.message.id)
 
           case Message.DiscordApiMessageReceived(
                 message: APIMessage.MessageMessage
@@ -75,6 +76,8 @@ object MessageReactor {
                   context.log.info(
                     s"init - id=${message.message.id} reaction=$reaction remaining=$reactions"
                   )
+
+                  // @TODO future failure
                   client.requestsHelper
                     .run(message.message.createReaction(reaction))(
                       message.cache.current
@@ -83,7 +86,7 @@ object MessageReactor {
                       context.self ! Message.Reacted(message, reactions)
                     }
 
-                  Behaviors.same
+                  handle(client, waiting + message.message.id)
 
                 case Nil =>
                   Behaviors.same
