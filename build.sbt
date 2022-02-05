@@ -1,3 +1,5 @@
+enablePlugins(JavaServerAppPackaging)
+
 name := "parrot"
 
 resolvers += Resolver.JCenterRepository
