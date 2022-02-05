@@ -2,8 +2,7 @@ package parrot.logic
 
 object evaluateWordle {
   val GuessLimit: Int = 6
-
-  private val Len = 5
+  val Length: Int = 5
 
   sealed trait Status
 
@@ -17,7 +16,7 @@ object evaluateWordle {
   def apply(guess: String, word: String): Vector[Status] =
     // this algo is crude, but there's no need to generalize really, just keep it simple
     // also keep in mind that inputs are 5 in length before any y'all want to use sets
-    if (guess.length != Len || word.length != Len)
+    if (guess.length != Length || word.length != Length)
       guess.toVector.map(_ => Status.NotInWord)
     else if (guess == word)
       guess.toVector.map(_ => Status.Correct)

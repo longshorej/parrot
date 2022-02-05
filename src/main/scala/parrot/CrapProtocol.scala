@@ -3,6 +3,7 @@ package parrot
 /** An ad-hoc line-based protocol that acks in reactions */
 object CrapProtocol {
   val WordleNew: String = "!wordle new"
+  val WordleHint: String = "!wordle hint"
   val WordleGuessPrefix: String = "!wordle"
   val WordleQuit: String = "!wordle quit"
   val Start: String = "!parrot-start"

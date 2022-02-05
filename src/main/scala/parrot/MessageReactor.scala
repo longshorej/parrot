@@ -6,6 +6,7 @@ import ackcord.requests.{CreateMessage, CreateMessageData}
 import ackcord.syntax.MessageSyntax
 import akka.actor.typed.{Behavior, PostStop}
 import akka.actor.typed.scaladsl.Behaviors
+import parrot.logic.evaluateWordle.Status
 import parrot.logic.{evaluateWordle, getReactions}
 
 import scala.concurrent.ExecutionContext
@@ -53,7 +54,9 @@ object MessageReactor {
       val fa = 826348192084787231L
       val personal = 845432753414602796L
 
-      client.requestsHelper.run(CreateMessage(TextChannelId(fa), CreateMessageData(text)))
+      client.requestsHelper.run(
+        CreateMessage(TextChannelId(fa), CreateMessageData(text))
+      )
     }
 
     Behaviors.setup[Message] { context =>
@@ -63,7 +66,6 @@ object MessageReactor {
         case message =>
           context.self.tell(Message.DiscordApiMessageReceived(message))
       }
-
 
       // @TODO does ackord do some client side inspection of event stream? why is coordinating on future
       // @TODO resolution enough?! i'd have expected to do that myself
@@ -177,7 +179,9 @@ object MessageReactor {
                       word
                     )
 
-                    sendMessageToFa("starting new wordle game")(message.cache.current)
+                    sendMessageToFa("starting new wordle game")(
+                      message.cache.current
+                    )
 
                     handle(
                       client = client,
@@ -193,14 +197,32 @@ object MessageReactor {
                       last = Some(message.message.id.asString)
                     )
 
+                  case CrapProtocol.WordleHint
+                      if maybeWordle.nonEmpty && maybeWordle.get.authorUsername == message.message.authorUsername =>
+                    val wordle = maybeWordle.get
+                    val index = Random.nextInt(evaluateWordle.GuessLimit)
+
+                    sendMessageToFa(
+                      s"letter #${index + 1} is ${wordle.word.lift(index).fold("")(_.toString)}"
+                    )(message.cache.current)
+
+                    handle(
+                      client = client,
+                      waiting = waiting,
+                      active = active,
+                      maybeWordle = maybeWordle,
+                      last = Some(message.message.id.asString)
+                    )
                   case line
                       if line.startsWith(
                         CrapProtocol.WordleGuessPrefix
                       ) && maybeWordle.nonEmpty && maybeWordle.get.authorUsername == message.message.authorUsername =>
+                    // @TODO require dictionary check
                     val wordle = maybeWordle.get // see maybeWordle.nonEmpty
                     val guess =
                       line.drop(CrapProtocol.WordleGuessPrefix.length).trim
-                    context.log.info("received wordle guess={} for word={} for authorUsername={} from authorUsername={}",
+                    context.log.info(
+                      "received wordle guess={} for word={} for authorUsername={} from authorUsername={}",
                       guess,
                       wordle.word,
                       wordle.authorUsername,
@@ -210,7 +232,9 @@ object MessageReactor {
                     val guesses = wordle.guesses :+ result
 
                     if (result.forall(_ == evaluateWordle.Status.Correct)) {
-                      sendMessageToFa("you win, feels good man")(message.cache.current)
+                      sendMessageToFa("you win, feels good man")(
+                        message.cache.current
+                      )
 
                       handle(
                         client = client,
@@ -220,7 +244,9 @@ object MessageReactor {
                         last = Some(message.message.id.asString)
                       )
                     } else if (guesses.length == evaluateWordle.GuessLimit) {
-                      sendMessageToFa("god ur bad")(message.cache.current)
+                      sendMessageToFa(s"god ur bad (it was ${wordle.word})")(
+                        message.cache.current
+                      )
 
                       handle(
                         client = client,
@@ -230,14 +256,22 @@ object MessageReactor {
                         last = Some(message.message.id.asString)
                       )
                     } else {
-                      sendMessageToFa(s"guess=$guess result=$result")(message.cache.current)
+                      val formattedResult = result
+                        .map {
+                          case Status.Correct   => "\uD83D\uDFE9"
+                          case Status.InWord    => "\uD83D\uDFE8"
+                          case Status.NotInWord => "\uD83D\uDFE5"
+                        }
+                        .mkString("")
+
+                      sendMessageToFa(formattedResult)(message.cache.current)
                       // @TODO improve the format
 
                       handle(
                         client = client,
                         waiting = waiting,
                         active = active,
-                        maybeWordle =  Some(wordle.copy(guesses = guesses)),
+                        maybeWordle = Some(wordle.copy(guesses = guesses)),
                         last = Some(message.message.id.asString)
                       )
                     }
