@@ -1,6 +1,8 @@
 package parrot.logic
 
 object evaluateWordle {
+  val GuessLimit: Int = 6
+
   private val Len = 5
 
   sealed trait Status
@@ -24,20 +26,24 @@ object evaluateWordle {
         .groupBy(identity)
         .mapValues(_.length)
 
-      val indexedGuess = guess
-        .toVector
-        .zipWithIndex
+      val indexedGuess = guess.toVector.zipWithIndex
 
-      val (_, result) = indexedGuess.foldLeft(initialRemaining -> Vector.empty[Status]) {
-        case ((remaining, a), (c, i)) if word(i) == c =>
-          remaining -> (a :+ Status.Correct)
+      val (_, result) =
+        indexedGuess.foldLeft(initialRemaining -> Vector.empty[Status]) {
+          case ((remaining, a), (c, i)) if word(i) == c =>
+            remaining -> (a :+ Status.Correct)
 
-        case ((remaining, a), (c, _)) if remaining.get(c).fold(false)(_ > 0) =>
-          remaining.get(c).fold(remaining - c)(n => remaining.updated(c, n - 1)) -> (a :+ Status.InWord)
+          case ((remaining, a), (c, _))
+              if remaining.get(c).fold(false)(_ > 0) =>
+            remaining
+              .get(c)
+              .fold(remaining - c)(n =>
+                remaining.updated(c, n - 1)
+              ) -> (a :+ Status.InWord)
 
-        case ((remaining, a), _) =>
-          remaining -> (a :+ Status.NotInWord)
-      }
+          case ((remaining, a), _) =>
+            remaining -> (a :+ Status.NotInWord)
+        }
 
       result
     }

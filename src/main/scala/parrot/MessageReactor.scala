@@ -1,16 +1,19 @@
 package parrot
 
-import ackcord.{APIMessage, DiscordClient}
-import ackcord.data.{MessageId, TextChannelId}
+import ackcord.{APIMessage, CacheSnapshot, DiscordClient}
+import ackcord.data.{MessageId, RawSnowflake, TextChannelId}
 import ackcord.requests.{CreateMessage, CreateMessageData}
 import ackcord.syntax.MessageSyntax
 import akka.actor.typed.{Behavior, PostStop}
 import akka.actor.typed.scaladsl.Behaviors
-import parrot.logic.getReactions
+import parrot.logic.{evaluateWordle, getReactions}
 
 import scala.concurrent.ExecutionContext
+import scala.util.Random
 
 object MessageReactor {
+  assert(Settings.Words.nonEmpty)
+
   sealed trait Message
 
   object Message {
@@ -19,14 +22,23 @@ object MessageReactor {
         message: APIMessage.MessageMessage,
         remaining: List[String]
     ) extends Message
+
+    private[MessageReactor] case object WordleTimedOut
   }
+
+  private case class WordleGame(
+      authorUsername: String,
+      word: String,
+      guesses: Seq[Vector[evaluateWordle.Status]]
+  )
 
   def apply(client: DiscordClient): Behavior[Message] =
     handle(
       client = client,
       waiting = Set.empty,
       active = true,
-      wordle = None
+      maybeWordle = None,
+      last = None
     )
 
   // @TODO active should be per server, not per instance
@@ -34,8 +46,16 @@ object MessageReactor {
       client: DiscordClient,
       waiting: Set[MessageId],
       active: Boolean,
-      wordle: Option[String]
-  ): Behavior[Message] =
+      maybeWordle: Option[WordleGame],
+      last: Option[String]
+  ): Behavior[Message] = {
+    def sendMessageToFa(text: String)(implicit c: CacheSnapshot): Unit = {
+      val fa = 826348192084787231L
+      val personal = 845432753414602796L
+
+      client.requestsHelper.run(CreateMessage(TextChannelId(fa), CreateMessageData(text)))
+    }
+
     Behaviors.setup[Message] { context =>
       implicit val ec: ExecutionContext = context.executionContext
 
@@ -44,7 +64,6 @@ object MessageReactor {
           context.self.tell(Message.DiscordApiMessageReceived(message))
       }
 
-      //client.requestsHelper.run(CreateMessage(TextChannelId(826348192084787231L), CreateMessageData("test")))(message.cache.current)
 
       // @TODO does ackord do some client side inspection of event stream? why is coordinating on future
       // @TODO resolution enough?! i'd have expected to do that myself
@@ -72,11 +91,12 @@ object MessageReactor {
               client = client,
               waiting = waiting - message.message.id,
               active = active,
-              wordle = wordle
+              maybeWordle = maybeWordle,
+              last = last
             )
 
           case Message.DiscordApiMessageReceived(
-                message: APIMessage.MessageMessage
+                message: APIMessage.MessageCreate
               ) =>
             // @TODO need something more composable here - this trends toward italian noodle
             getReactions(message.message.content) match {
@@ -99,10 +119,14 @@ object MessageReactor {
                   client = client,
                   waiting = waiting + message.message.id,
                   active = active,
-                  wordle = wordle
+                  maybeWordle = maybeWordle,
+                  last = Some(message.message.id.asString)
                 )
 
-              case _ =>
+              case _ if !last.contains(message.message.id.asString) =>
+                // @TODO duplicates
+
+                context.log.info("received message id={}", message.message.id)
                 message.message.content match {
                   case CrapProtocol.Start =>
                     // @TODO future failure
@@ -118,7 +142,8 @@ object MessageReactor {
                       client = client,
                       waiting = waiting,
                       active = true,
-                      wordle = wordle
+                      maybeWordle = maybeWordle,
+                      last = Some(message.message.id.asString)
                     )
 
                   case CrapProtocol.Stop =>
@@ -135,15 +160,95 @@ object MessageReactor {
                       client = client,
                       waiting = waiting,
                       active = false,
-                      wordle = wordle
+                      maybeWordle = maybeWordle,
+                      last = Some(message.message.id.asString)
                     )
 
-                  case CrapProtocol.WordleNew =>
-                    Behaviors.same
+                  case CrapProtocol.WordleNew if maybeWordle.isEmpty =>
+                    // @TODO schedule a timeout
+                    // @TODO wordlegame needs an id - to ensure timeout applied correctly
+                    val word =
+                      Settings.Words(Random.nextInt(Settings.Words.length))
+
+                    context.log.info(
+                      "starting new wordle game, authorId={} authorUsername={} word={}",
+                      message.message.authorId.asString,
+                      message.message.authorUsername,
+                      word
+                    )
+
+                    sendMessageToFa("starting new wordle game")(message.cache.current)
+
+                    handle(
+                      client = client,
+                      waiting = waiting,
+                      active = active,
+                      maybeWordle = Some(
+                        WordleGame(
+                          authorUsername = message.message.authorUsername,
+                          word = word,
+                          guesses = Vector.empty
+                        )
+                      ),
+                      last = Some(message.message.id.asString)
+                    )
+
+                  case line
+                      if line.startsWith(
+                        CrapProtocol.WordleGuessPrefix
+                      ) && maybeWordle.nonEmpty && maybeWordle.get.authorUsername == message.message.authorUsername =>
+                    val wordle = maybeWordle.get // see maybeWordle.nonEmpty
+                    val guess =
+                      line.drop(CrapProtocol.WordleGuessPrefix.length).trim
+                    context.log.info("received wordle guess={} for word={} for authorUsername={} from authorUsername={}",
+                      guess,
+                      wordle.word,
+                      wordle.authorUsername,
+                      message.message.authorUsername
+                    )
+                    val result = evaluateWordle(guess, wordle.word)
+                    val guesses = wordle.guesses :+ result
+
+                    if (result.forall(_ == evaluateWordle.Status.Correct)) {
+                      sendMessageToFa("you win, feels good man")(message.cache.current)
+
+                      handle(
+                        client = client,
+                        waiting = waiting,
+                        active = active,
+                        maybeWordle = None,
+                        last = Some(message.message.id.asString)
+                      )
+                    } else if (guesses.length == evaluateWordle.GuessLimit) {
+                      sendMessageToFa("god ur bad")(message.cache.current)
+
+                      handle(
+                        client = client,
+                        waiting = waiting,
+                        active = active,
+                        maybeWordle = None,
+                        last = Some(message.message.id.asString)
+                      )
+                    } else {
+                      sendMessageToFa(s"guess=$guess result=$result")(message.cache.current)
+                      // @TODO improve the format
+
+                      handle(
+                        client = client,
+                        waiting = waiting,
+                        active = active,
+                        maybeWordle =  Some(wordle.copy(guesses = guesses)),
+                        last = Some(message.message.id.asString)
+                      )
+                    }
 
                   case _ =>
                     Behaviors.same
                 }
+
+              case _ =>
+                // @TODO why are we getting dups
+                Behaviors.same
             }
 
           case Message.DiscordApiMessageReceived(_) =>
@@ -156,4 +261,5 @@ object MessageReactor {
             Behaviors.same
         }
     }
+  }
 }
