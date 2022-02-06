@@ -14,40 +14,34 @@ object evaluateWordle {
 
   // @TODO scalafmt messes this up - tweak settings
   def apply(guess: String, word: String): Vector[Status] =
-    // this algo is crude, but there's no need to generalize really, just keep it simple
-    // also keep in mind that inputs are 5 in length before any y'all want to use sets
     if (guess.length != Length || word.length != Length)
       guess.toVector.map(_ => Status.NotInWord)
     else if (guess == word)
       guess.toVector.map(_ => Status.Correct)
     else {
-      val corrects = word.zipWithIndex
-        .filter { case (c, i) => guess(i) == c}
-        .map { case (c, _) => c }
+      val guessAndWord = guess.zip(word)
+
+      val corrects = guessAndWord
+        .flatMap { case (g, w) => if (g == w) Some(g) else None }
         .groupBy(identity)
         .mapValues(_.length)
 
-      val initialRemaining = word
+      val budget = word
         .groupBy(identity)
         .map { case (c, e) => c -> (e.length - corrects.getOrElse(c, 0)) }
 
-      val indexedGuess = guess.toVector.zipWithIndex
-
-      val (_, result) =
-        indexedGuess.foldLeft(initialRemaining -> Vector.empty[Status]) {
-          case ((remaining, a), (c, i)) if word(i) == c =>
+      val (_, result) = guessAndWord
+        .foldLeft(budget -> Vector.empty[Status]) {
+          case ((remaining, a), (g, w)) if g == w =>
             remaining -> (a :+ Status.Correct)
 
-          case ((remaining, a), (c, _))
-              if remaining.get(c).fold(false)(_ > 0) =>
-            remaining
-              .get(c)
-              .fold(remaining - c)(n =>
-                remaining.updated(c, n - 1)
-              ) -> (a :+ Status.InWord)
-
-          case ((remaining, a), _) =>
-            remaining -> (a :+ Status.NotInWord)
+          case ((remaining, a), (g, _)) =>
+            remaining.get(g) match {
+              case Some(n) if n > 0 =>
+                remaining.updated(g, n - 1) -> (a :+ Status.InWord)
+              case _ =>
+                remaining -> (a :+ Status.NotInWord)
+            }
         }
 
       result
