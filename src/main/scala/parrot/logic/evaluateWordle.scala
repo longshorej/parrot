@@ -21,9 +21,15 @@ object evaluateWordle {
     else if (guess == word)
       guess.toVector.map(_ => Status.Correct)
     else {
-      val initialRemaining = word
+      val corrects = word.zipWithIndex
+        .filter { case (c, i) => guess(i) == c}
+        .map { case (c, _) => c }
         .groupBy(identity)
         .mapValues(_.length)
+
+      val initialRemaining = word
+        .groupBy(identity)
+        .map { case (c, e) => c -> (e.length - corrects.getOrElse(c, 0)) }
 
       val indexedGuess = guess.toVector.zipWithIndex
 

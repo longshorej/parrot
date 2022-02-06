@@ -17,5 +17,13 @@ class ParrotTests extends AnyFlatSpec with should.Matchers {
       logic.evaluateWordle.Status.NotInWord,
       logic.evaluateWordle.Status.NotInWord
     )
+
+    logic.evaluateWordle("taint", "haunt") shouldBe Vector(
+      logic.evaluateWordle.Status.NotInWord,
+      logic.evaluateWordle.Status.Correct,
+      logic.evaluateWordle.Status.NotInWord,
+      logic.evaluateWordle.Status.Correct,
+      logic.evaluateWordle.Status.Correct
+    )
   }
 }
