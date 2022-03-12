@@ -35,7 +35,7 @@ object Settings {
     'x' -> List("\uD83C\uDDFD"),
     'y' -> List("\uD83C\uDDFE"),
     'z' -> List("\uD83C\uDDFF"),
-    '0' -> List("0️⃣"),
+    '0' -> List("0️⃣", "\uD83C\uDDF4"),
     '1' -> List("1️⃣"),
     '2' -> List("2️⃣"),
     '3' -> List("3️⃣"),
