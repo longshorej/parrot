@@ -14,7 +14,9 @@ object getReactions {
 
   def apply(message: String): List[String] =
     if (message.forall(isStrictlyAlphaNumericOrLimitedSymbolic))
-      process(message)
+      processPrimary(message)
+        .orElse(processConsecutive(message))
+        .getOrElse(Nil)
     else
       List.empty
 
@@ -23,9 +25,10 @@ object getReactions {
   private def isStrictlyAlphaNumericOrLimitedSymbolic(char: Char): Boolean =
     (char >= 'a' && char <= 'z') || (char >= 'A' && char <= 'Z') || (char >= '0' && char <= '9') || char == '$'
 
-  private def process(message: String): List[String] =
+  /** Primary logic that converts based on entries in a lookup table. */
+  private def processPrimary(message: String): Option[List[String]] =
     if (message.length > Settings.TermMax || message.length < Settings.TermMin)
-      List.empty
+      None
     else {
       val result = message.toLowerCase
         .foldLeft(preparedMappings -> List.empty[String]) {
@@ -45,8 +48,16 @@ object getReactions {
         .reverse
 
       if (result.length == message.length)
-        result
+        Some(result)
       else
-        Nil
+        None
     }
+
+  /** Processes the message by collapsing consecutive characters. e.g. "aaabbbaaa" becomes "aba" which
+    * is then reacted to with the primary method.
+    */
+  private def processConsecutive(message: String): Option[List[String]] =
+    processPrimary(message.foldLeft("") {
+      case (a, c) => if (a.endsWith(c.toString)) a else a + c
+    })
 }
