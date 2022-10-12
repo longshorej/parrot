@@ -53,11 +53,34 @@ object getReactions {
         None
     }
 
-  /** Processes the message by collapsing consecutive characters. e.g. "aaabbbaaa" becomes "aba" which
-    * is then reacted to with the primary method.
+  /** Processes the message by collapsing consecutive characters. e.g. "aaabbbaaa" becomes "aabbaa" which
+    * is then reacted to with the primary method. A character must occur at least 3 times to be collapsed,
+    * and will first be collapsed into a string of 2 chars to retain some of the original style, and allow
+    * proper spelling of most words, since in english two consecutive chars may occur in a valid word, but
+    * rarely 3 (if ever?). If no good with 2, we try with 1.
     */
-  private def processConsecutive(message: String): Option[List[String]] =
-    processPrimary(message.foldLeft("") {
-      case (a, c) => if (a.endsWith(c.toString)) a else a + c
-    })
+  private def processConsecutive(message: String): Option[List[String]] = {
+    val min = 3
+
+    def collapse(max: Int): String = {
+      val (reduced, _) = message.foldLeft("" -> Option.empty[Char]) {
+        case (current @ (_, d), c) if d.contains(c) =>
+          current
+
+        case ((a, _), c) if a.takeRight(min - 1).count(_ == c) == min =>
+          (a.dropRight(max - 1) + c) -> Some(c)
+
+        case ((a, _), c) if a.takeRight(max).count(_ == c) == max =>
+          a -> Some(c)
+
+        case ((a, _), c) =>
+          (a + c) -> None
+      }
+
+      reduced
+    }
+
+    processPrimary(collapse(max = 2))
+      .orElse(processPrimary(collapse(max = 1)))
+  }
 }

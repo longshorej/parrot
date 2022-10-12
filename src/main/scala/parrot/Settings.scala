@@ -48,7 +48,7 @@ object Settings {
     '$' -> List("\uD83D\uDCB2")
   )
   val TermMin: Int = 1
-  val TermMax: Int = 4
+  val TermMax: Int = 5
   val Words: Seq[String] = Vector(
     "cigar",
     "rebut",

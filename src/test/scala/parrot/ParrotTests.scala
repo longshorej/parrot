@@ -15,6 +15,31 @@ class ParrotTests extends AnyFlatSpec with should.Matchers {
 
     logic
       .getReactions("22222221111") shouldBe List("2️⃣", "1️⃣")
+
+    logic
+      .getReactions("sweet") shouldBe List("🇸", "🇼", "🇪", "3️⃣", "🇹")
+
+    logic
+      .getReactions("sweeeeeeeeeeeeeeeeeeet") shouldBe List(
+      "🇸",
+      "🇼",
+      "🇪",
+      "3️⃣",
+      "🇹"
+    )
+
+    logic
+      .getReactions("allllllllllllllll") shouldBe List(
+      "🇦",
+      "🇱",
+      "1️⃣"
+    )
+
+    logic.getReactions("azzzzzz") shouldBe List(
+      "🇦",
+      "🇿"
+    )
+
   }
 
   "evaluateWordle" should "work" in {
