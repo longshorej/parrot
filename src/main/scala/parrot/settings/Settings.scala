@@ -10,5 +10,7 @@ object Settings {
   val botToken: String = sys.env.getOrElse("PARROT_BOT_TOKEN", "xyz")
 
   val reactions: ReactionsSettings = new ReactionsSettings
+  val scheduledGreetings: ScheduledGreetingsSettings =
+    new ScheduledGreetingsSettings
   val wordle: WordleSettings = new WordleSettings
 }
