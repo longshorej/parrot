@@ -8,12 +8,13 @@ import akka.actor.typed.{Behavior, PostStop}
 import akka.actor.typed.scaladsl.Behaviors
 import parrot.logic.evaluateWordle.Status
 import parrot.logic.{evaluateWordle, getReactions}
+import parrot.settings.Settings
 
 import scala.concurrent.ExecutionContext
 import scala.util.Random
 
 object MessageReactor {
-  assert(Settings.Words.nonEmpty)
+  assert(Settings.wordle.words.nonEmpty)
 
   sealed trait Message
 
@@ -170,7 +171,9 @@ object MessageReactor {
                     // @TODO schedule a timeout
                     // @TODO wordlegame needs an id - to ensure timeout applied correctly
                     val word =
-                      Settings.Words(Random.nextInt(Settings.Words.length))
+                      Settings.wordle.words(
+                        Random.nextInt(Settings.wordle.words.length)
+                      )
 
                     context.log.info(
                       "starting new wordle game, authorId={} authorUsername={} word={}",
