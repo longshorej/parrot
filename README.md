@@ -36,3 +36,9 @@ parrot[ERROR] [guardian-akka.actor.default-dispatcher-3] INFO akka.event.slf4j.S
 parrot[ERROR] [AckCord-akka.actor.default-dispatcher-3] INFO akka.actor.ActorSystemImpl - Got WS gateway: wss://gateway.discord.gg
 sbt:parrot> 
 ```
+## Operator Notes
+
+The bot currently runs on a plain old VPS. Run `universal:packageBin` in sbt to create a zip file,
+copy it over, ssh to the machine, kill screen
+
+If bot has failed, ssh to machine and restart screen. Somehow this happened yet? Does the selected VPS hosting not reboot?!
