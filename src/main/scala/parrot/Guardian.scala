@@ -1,13 +1,24 @@
 package parrot
 
 import ackcord.{ClientSettings, DiscordClient}
-import akka.actor.typed.{ActorSystem, Behavior, DispatcherSelector}
+import akka.actor.CoordinatedShutdown
+import akka.actor.typed.{
+  ActorSystem,
+  Behavior,
+  DispatcherSelector,
+  Signal,
+  Terminated
+}
 import akka.actor.typed.scaladsl.Behaviors
+import com.typesafe.scalalogging.StrictLogging
+import parrot.impls.GreetingTypeImpl.CaliMorningImpl
+import parrot.settings.ScheduledGreetingsSettings.{Greeting, GreetingType}
+import parrot.settings.Settings
 
 import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success}
 
-object Guardian {
+object Guardian extends StrictLogging {
   sealed trait Message
 
   object Message {
@@ -21,6 +32,11 @@ object Guardian {
       implicit val ec: ExecutionContext =
         system.dispatchers.lookup(DispatcherSelector.default())
 
+      def failService(): Behavior[Message] = {
+        CoordinatedShutdown(system).run(ShutdownReason.ServiceFailure)
+        Behaviors.same
+      }
+
       clientSettings
         .createClient()
         .onComplete {
@@ -31,19 +47,49 @@ object Guardian {
             context.self.tell(Message.ClientCreated(client))
         }
 
-      Behaviors.receiveMessage[Message] {
-        case Message.ClientCreationFailed(cause) =>
-          // @TODO exit code non-zero
-          // @TODO log cause
+      Behaviors
+        .receiveMessage[Message] {
+          case Message.ClientCreationFailed(cause) =>
+            logger.error("client creation failed", cause)
 
-          Behaviors.stopped
+            failService()
 
-        case Message.ClientCreated(client) =>
-          client.login()
+          case Message.ClientCreated(client) =>
+            client.login()
 
-          context.spawn(MessageReactor(client), "reactor")
+            val messageReactor = context.spawn(
+              behavior = MessageReactor(client),
+              "reactor"
+            )
 
-          Behaviors.same
-      }
+            val greetingScheduler = context.spawn(
+              behavior = GreetingScheduler(
+                client,
+                List(
+                  new CaliMorningImpl(
+                    Settings.scheduledGreetings.greetings.flatMap { g =>
+                      g.greetingType match {
+                        case caliMorning: GreetingType.CaliMorning =>
+                          Some(g.copy(greetingType = caliMorning))
+                        case _ => None
+                      }
+                    }
+                  )
+                )
+              ),
+              name = "greeting-scheduler"
+            )
+
+            context.watch(messageReactor)
+            context.watch(greetingScheduler)
+
+            Behaviors.same
+        }
+        .receiveSignal {
+          case (_, Terminated(value)) =>
+            logger.error(s"watched actor has terminated, actor=$value")
+
+            failService()
+        }
     }
 }

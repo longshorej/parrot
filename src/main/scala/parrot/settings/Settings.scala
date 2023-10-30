@@ -1,7 +1,5 @@
 package parrot.settings
 
-case class Greeting()
-
 // @TODO use akka config
 // @TODO use range?
 object Settings {
