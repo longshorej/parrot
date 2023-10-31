@@ -47,8 +47,8 @@ object GreetingTypeImpl {
         val targetEnd = tickZonedStartOfDay.plusHours(10)
         val targetEndMs = targetEnd.toInstant.toEpochMilli
         val range = targetEndMs - targetStartMs
-        //val targetMs = targetStartMs + rand.nextLong(range)
-        val targetMs = tick + 3000L // @TODO local hack for testing
+        val targetMs = targetStartMs + rand.nextLong(range)
+        //val targetMs = tick + 3000L // @TODO local hack for testing
         val targetZoned = Instant.ofEpochMilli(targetMs).atZone(zoneId)
         val minutesUntilTick = (targetMs - tick) / 1000d / 60
 
