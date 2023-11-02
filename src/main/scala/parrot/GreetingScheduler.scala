@@ -15,14 +15,6 @@ object GreetingScheduler {
     case class DiscordApiMessageReceived(message: APIMessage) extends Message
   }
 
-  def ticksBetween(last: Long, current: Long): List[Long] = {
-    require(last <= current)
-
-    ((last / 1000) + 1 to (current / 1000)).map(_ * 1000).toList.distinct
-  }
-
-  def getCurrentTick(): Long = System.currentTimeMillis() / 1000L * 1000L
-
   def apply(
       client: DiscordClient,
       greetingTypeImpls: List[GreetingTypeImpl]
@@ -39,20 +31,14 @@ object GreetingScheduler {
           Settings.scheduledGreetings.tickInterval
         )
 
-        def behavior(
-            lastTick: Long,
-            maybeCacheState: Option[CacheState]
-        ): Behavior[Message] =
+        def behavior(maybeCacheState: Option[CacheState]): Behavior[Message] =
           Behaviors
             .receiveMessage[Message] {
               case Message.Tick =>
-                val currentTick = getCurrentTick()
-
                 for {
                   cacheState <- maybeCacheState
-                  tick <- ticksBetween(lastTick, currentTick)
                   greetingTypeImpl <- greetingTypeImpls
-                  message <- greetingTypeImpl.tick(tick)
+                  message <- greetingTypeImpl.tick()
                 } message match {
                   case GreetingContent.Image(url) =>
                     client.sendImageToActive(url)(cacheState.current)
@@ -61,10 +47,10 @@ object GreetingScheduler {
                     client.sendTextToActive(text)(cacheState.current)
                 }
 
-                behavior(currentTick, maybeCacheState)
+                Behaviors.same
 
               case Message.DiscordApiMessageReceived(message) =>
-                behavior(lastTick, Some(message.cache))
+                behavior(Some(message.cache))
             }
             .receiveSignal {
               case (_, _: PostStop) =>
@@ -73,7 +59,7 @@ object GreetingScheduler {
                 Behaviors.same
             }
 
-        behavior(getCurrentTick(), None)
+        behavior(None)
       }
     }
 }
