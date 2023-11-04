@@ -1,15 +1,15 @@
 package parrot.logic
 
-import parrot.Settings
+import parrot.settings.Settings
 
 object getReactions {
   private val preparedMappings =
-    Settings.CharMappings ++ Settings.LeetCharMappings.map {
+    Settings.reactions.charMappings ++ Settings.reactions.leetCharMappings.map {
       case (key, value) =>
-        key -> (Settings.CharMappings.getOrElse(
+        key -> (Settings.reactions.charMappings.getOrElse(
           key,
           Nil
-        ) ++ Settings.CharMappings.getOrElse(value, Nil))
+        ) ++ Settings.reactions.charMappings.getOrElse(value, Nil))
     }
 
   def apply(message: String): List[String] =
@@ -27,7 +27,9 @@ object getReactions {
 
   /** Primary logic that converts based on entries in a lookup table. */
   private def processPrimary(message: String): Option[List[String]] =
-    if (message.length > Settings.TermMax || message.length < Settings.TermMin)
+    if (
+      message.length > Settings.reactions.termMax || message.length < Settings.reactions.termMin
+    )
       None
     else {
       val result = message.toLowerCase

@@ -39,6 +39,7 @@ sbt:parrot>
 ## Operator Notes
 
 The bot currently runs on a plain old VPS. Run `universal:packageBin` in sbt to create a zip file,
-copy it over, ssh to the machine, kill screen
+copy it over, ssh to the machine, kill screen. There's a dotfile to be sourced with tokens in the
+directory you unzip it to.
 
-If bot has failed, ssh to machine and restart screen. Somehow this happened yet? Does the selected VPS hosting not reboot?!
+If bot has failed, ssh to machine and restart screen. Somehow this hasn't happened yet? Does the selected VPS hosting not reboot?!

@@ -8,12 +8,13 @@ import akka.actor.typed.{Behavior, PostStop}
 import akka.actor.typed.scaladsl.Behaviors
 import parrot.logic.evaluateWordle.Status
 import parrot.logic.{evaluateWordle, getReactions}
+import parrot.settings.Settings
 
 import scala.concurrent.ExecutionContext
 import scala.util.Random
 
 object MessageReactor {
-  assert(Settings.Words.nonEmpty)
+  assert(Settings.wordle.words.nonEmpty)
 
   sealed trait Message
 
@@ -50,15 +51,6 @@ object MessageReactor {
       maybeWordle: Option[WordleGame],
       last: Option[String]
   ): Behavior[Message] = {
-    def sendMessageToFa(text: String)(implicit c: CacheSnapshot): Unit = {
-      val fa = 826348192084787231L
-      val personal = 845432753414602796L
-
-      client.requestsHelper.run(
-        CreateMessage(TextChannelId(fa), CreateMessageData(text))
-      )
-    }
-
     Behaviors.setup[Message] { context =>
       implicit val ec: ExecutionContext = context.executionContext
 
@@ -170,7 +162,9 @@ object MessageReactor {
                     // @TODO schedule a timeout
                     // @TODO wordlegame needs an id - to ensure timeout applied correctly
                     val word =
-                      Settings.Words(Random.nextInt(Settings.Words.length))
+                      Settings.wordle.words(
+                        Random.nextInt(Settings.wordle.words.length)
+                      )
 
                     context.log.info(
                       "starting new wordle game, authorId={} authorUsername={} word={}",
@@ -179,7 +173,7 @@ object MessageReactor {
                       word
                     )
 
-                    sendMessageToFa("starting new wordle game")(
+                    client.sendTextToActive("starting new wordle game")(
                       message.cache.current
                     )
 
@@ -202,7 +196,7 @@ object MessageReactor {
                     val wordle = maybeWordle.get
                     val index = Random.nextInt(evaluateWordle.GuessLimit)
 
-                    sendMessageToFa(
+                    client.sendTextToActive(
                       s"letter #${index + 1} is ${wordle.word.lift(index).fold("")(_.toString)}"
                     )(message.cache.current)
 
@@ -232,7 +226,7 @@ object MessageReactor {
                     val guesses = wordle.guesses :+ result
 
                     if (result.forall(_ == evaluateWordle.Status.Correct)) {
-                      sendMessageToFa("you win, feels good man")(
+                      client.sendTextToActive("you win, feels good man")(
                         message.cache.current
                       )
 
@@ -244,7 +238,9 @@ object MessageReactor {
                         last = Some(message.message.id.asString)
                       )
                     } else if (guesses.length == evaluateWordle.GuessLimit) {
-                      sendMessageToFa(s"god ur bad (it was ${wordle.word})")(
+                      client.sendTextToActive(
+                        s"god ur bad (it was ${wordle.word})"
+                      )(
                         message.cache.current
                       )
 
@@ -264,7 +260,9 @@ object MessageReactor {
                         }
                         .mkString("")
 
-                      sendMessageToFa(formattedResult)(message.cache.current)
+                      client.sendTextToActive(formattedResult)(
+                        message.cache.current
+                      )
                       // @TODO improve the format
 
                       handle(
