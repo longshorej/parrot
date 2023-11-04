@@ -53,7 +53,7 @@ class ScheduledGreetingsSettings {
     ).map(url =>
       Greeting(
         GreetingContent.Image(url),
-        GreetingType.CaliMorning(Set(DayOfWeek.SUNDAY))
+        GreetingType.CaliMorning(EveryDay)
       )
     ),
     // Sundays
