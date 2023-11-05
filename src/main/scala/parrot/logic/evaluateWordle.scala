@@ -24,7 +24,9 @@ object evaluateWordle {
       val corrects = guessAndWord
         .flatMap { case (g, w) => if (g == w) Some(g) else None }
         .groupBy(identity)
+        .view
         .mapValues(_.length)
+        .toMap
 
       val budget = word
         .groupBy(identity)
