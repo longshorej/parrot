@@ -10,6 +10,7 @@ val Versions = new {
   val AkkaHttp     = "10.2.4"
   val Logback      = "1.2.12"
   val PPrint       = "0.7.0"
+  val Scala        = "2.13.12"
   val ScalaLogging = "3.9.4"
   val ScalaTest    = "3.2.9"
   val SprayJson    = "1.3.6"
@@ -30,6 +31,8 @@ libraryDependencies ++= Seq(
 
   "org.scalatest"              %% "scalatest"         % Versions.ScalaTest               %      "test"
 )
+
+scalaVersion := Versions.Scala
 
 scalacOptions ++= Seq(
   "-encoding", "utf8",
