@@ -70,7 +70,10 @@ class ScheduledGreetingsSettings {
     Seq(
       "https://media.tenor.com/VVfhXRyHEF4AAAAC/monday-left-me-broken-cat.gif",
       "https://i.giphy.com/media/tqj4m9BRURayxQAIW9/giphy.webp",
-      "https://i.giphy.com/media/l0MYxP6UQvojorkoo/giphy.webp"
+      "https://i.giphy.com/media/l0MYxP6UQvojorkoo/giphy.webp",
+      "https://i.pinimg.com/originals/4a/93/01/4a9301659a81911f23e86dc1e7509538.gif",
+      "https://media.tenor.com/00hqr9WPHeQAAAAC/michael-j.gif",
+      "https://media.tenor.com/GkNDPEh5hlMAAAAC/monday-motivation.gif"
     ).map(url =>
       Greeting(
         GreetingContent.Image(url),
