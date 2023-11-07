@@ -59,7 +59,7 @@ class ScheduledGreetingsSettings {
     // Sundays
     Seq(
       "https://img1.picmix.com/output/pic/normal/9/4/1/6/11096149_a194d.gif",
-      "https://i.giphy.com/media/62Xg1C7ttZyZpVSU9C/giphy.webp"
+      "https://i.giphy.com/media/62Xg1C7ttZyZpVSU9C/giphy.gif"
     ).map(url =>
       Greeting(
         GreetingContent.Image(url),
@@ -69,8 +69,8 @@ class ScheduledGreetingsSettings {
     // Mondays
     Seq(
       "https://media.tenor.com/VVfhXRyHEF4AAAAC/monday-left-me-broken-cat.gif",
-      "https://i.giphy.com/media/tqj4m9BRURayxQAIW9/giphy.webp",
-      "https://i.giphy.com/media/l0MYxP6UQvojorkoo/giphy.webp",
+      "https://i.giphy.com/media/tqj4m9BRURayxQAIW9/giphy.gif",
+      "https://i.giphy.com/media/l0MYxP6UQvojorkoo/giphy.gif",
       "https://i.pinimg.com/originals/4a/93/01/4a9301659a81911f23e86dc1e7509538.gif",
       "https://media.tenor.com/00hqr9WPHeQAAAAC/michael-j.gif",
       "https://media.tenor.com/GkNDPEh5hlMAAAAC/monday-motivation.gif"
@@ -82,10 +82,10 @@ class ScheduledGreetingsSettings {
     ),
     // Tuesdays
     Seq(
-      "https://i.giphy.com/media/hcv7WXFlfys9q0XJTq/giphy.webp",
-      "https://i.giphy.com/media/flL6zRWgnNDvSidTcX/giphy.webp",
-      "https://i.giphy.com/media/C63ZDiuirVuRO2QzK4/giphy.webp",
-      "https://i.giphy.com/media/8hslg9Pba3Uoq3U9i1/giphy.webp"
+      "https://i.giphy.com/media/hcv7WXFlfys9q0XJTq/giphy.gif",
+      "https://i.giphy.com/media/flL6zRWgnNDvSidTcX/giphy.gif",
+      "https://i.giphy.com/media/C63ZDiuirVuRO2QzK4/giphy.gif",
+      "https://i.giphy.com/media/8hslg9Pba3Uoq3U9i1/giphy.gif"
     ).map(url =>
       Greeting(
         GreetingContent.Image(url),
@@ -94,8 +94,8 @@ class ScheduledGreetingsSettings {
     ),
     // Wednesdays
     Seq(
-      "https://i.giphy.com/media/uLgd9dOYWpnu5WkShY/giphy.webp",
-      "https://i.giphy.com/media/YjKWzP8n97YisqCWPK/giphy.webp",
+      "https://i.giphy.com/media/uLgd9dOYWpnu5WkShY/giphy.gif",
+      "https://i.giphy.com/media/YjKWzP8n97YisqCWPK/giphy.gif",
       "https://media.tenor.com/p1ME7s6S_7sAAAAC/have-an-awesome-wednesday-stay-safe-and-blessed.gif",
       "https://img1.picmix.com/output/pic/normal/9/8/0/5/10935089_13a7f.gif",
       "https://img1.picmix.com/output/pic/normal/7/4/2/2/6592247_181a4.gif",
