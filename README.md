@@ -1,6 +1,14 @@
 # Parrot
 
-This is a silly Discord bot that reacts to one-word messages with that message itself.
+This started as a silly Discord bot that reacts to one-word messages with that message itself, for use by
+a 20-year-old gaming community.
+
+It continues to amass some functionality, however. The bot is a hodgepodge of features, such as:
+
+* Cali Morning Greetings
+* Cali Evening Greetings
+* Reactions
+* Wordle
 
 ## Example
 
