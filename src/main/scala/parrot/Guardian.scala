@@ -2,17 +2,10 @@ package parrot
 
 import ackcord.{ClientSettings, DiscordClient}
 import akka.actor.CoordinatedShutdown
-import akka.actor.typed.{
-  ActorSystem,
-  Behavior,
-  DispatcherSelector,
-  Signal,
-  Terminated
-}
+import akka.actor.typed.{ActorSystem, Behavior, DispatcherSelector, Terminated}
 import akka.actor.typed.scaladsl.Behaviors
 import com.typesafe.scalalogging.StrictLogging
-import parrot.impls.GreetingTypeImpl.CaliMorningImpl
-import parrot.settings.ScheduledGreetingsSettings.{Greeting, GreetingType}
+import parrot.impls.GreetingTypeImpl.{CaliEveningImpl, CaliMorningImpl}
 import parrot.settings.Settings
 
 import scala.concurrent.ExecutionContext
@@ -67,13 +60,10 @@ object Guardian extends StrictLogging {
                 client,
                 List(
                   new CaliMorningImpl(
-                    Settings.scheduledGreetings.greetings.flatMap { g =>
-                      g.greetingType match {
-                        case caliMorning: GreetingType.CaliMorning =>
-                          Some(g.copy(greetingType = caliMorning))
-                        case _ => None
-                      }
-                    }
+                    Settings.scheduledGreetings.morningGreetings
+                  ),
+                  new CaliEveningImpl(
+                    Settings.scheduledGreetings.eveningGreetings
                   )
                 )
               ),
