@@ -1,5 +1,7 @@
 # Parrot
 
+An AI-based Discord bot.
+
 This started as a silly Discord bot that reacts to one-word messages with that message itself, for use by
 a 20-year-old gaming community.
 
