@@ -41,10 +41,16 @@ object GreetingScheduler {
                   message <- greetingTypeImpl.tick()
                 } message match {
                   case GreetingContent.Image(url) =>
-                    client.sendImageToActive(url)(cacheState.current)
+                    client.sendImageToActive(url)(
+                      cacheState.current,
+                      context.executionContext
+                    )
 
                   case GreetingContent.Text(text) =>
-                    client.sendTextToActive(text)(cacheState.current)
+                    client.sendTextToActive(text)(
+                      cacheState.current,
+                      context.executionContext
+                    )
                 }
 
                 Behaviors.same

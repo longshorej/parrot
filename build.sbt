@@ -32,6 +32,10 @@ libraryDependencies ++= Seq(
   "org.scalatest"              %% "scalatest"         % Versions.ScalaTest               %      "test"
 )
 
+reStart / envVars := List("PARROT_DAD_JOKES_PATH")
+  .flatMap(n => sys.env.get(n).map(v => n -> v))
+  .toMap
+
 scalaVersion := Versions.Scala
 
 scalacOptions ++= Seq(

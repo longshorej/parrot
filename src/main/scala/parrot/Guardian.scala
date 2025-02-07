@@ -5,6 +5,7 @@ import akka.actor.CoordinatedShutdown
 import akka.actor.typed.{ActorSystem, Behavior, DispatcherSelector, Terminated}
 import akka.actor.typed.scaladsl.Behaviors
 import com.typesafe.scalalogging.StrictLogging
+import parrot.dadjokes.DadJoker
 import parrot.impls.GreetingTypeImpl.{CaliEveningImpl, CaliMorningImpl}
 import parrot.settings.Settings
 
@@ -50,28 +51,40 @@ object Guardian extends StrictLogging {
           case Message.ClientCreated(client) =>
             client.login()
 
-            val messageReactor = context.spawn(
-              behavior = MessageReactor(client),
-              "reactor"
+            context.watch(
+              context.spawn(
+                behavior = DadJoker(
+                  client,
+                  Settings.dadJokerSettings.jokes,
+                  Settings.dadJokerSettings.tickInterval
+                ),
+                name = "dad-joker"
+              )
             )
 
-            val greetingScheduler = context.spawn(
-              behavior = GreetingScheduler(
-                client,
-                List(
-                  Some(Settings.scheduledGreetings.morningGreetings)
-                    .filter(_.nonEmpty)
-                    .map(new CaliMorningImpl(_)),
-                  Some(Settings.scheduledGreetings.eveningGreetings)
-                    .filter(_.nonEmpty)
-                    .map(new CaliEveningImpl(_))
-                ).flatten
-              ),
-              name = "greeting-scheduler"
+            context.watch(
+              context.spawn(
+                behavior = MessageReactor(client),
+                name = "reactor"
+              )
             )
 
-            context.watch(messageReactor)
-            context.watch(greetingScheduler)
+            context.watch(
+              context.spawn(
+                behavior = GreetingScheduler(
+                  client,
+                  List(
+                    Some(Settings.scheduledGreetings.morningGreetings)
+                      .filter(_.nonEmpty)
+                      .map(new CaliMorningImpl(_)),
+                    Some(Settings.scheduledGreetings.eveningGreetings)
+                      .filter(_.nonEmpty)
+                      .map(new CaliEveningImpl(_))
+                  ).flatten
+                ),
+                name = "greeting-scheduler"
+              )
+            )
 
             Behaviors.same
         }
