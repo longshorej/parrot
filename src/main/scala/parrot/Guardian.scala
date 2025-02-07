@@ -59,13 +59,13 @@ object Guardian extends StrictLogging {
               behavior = GreetingScheduler(
                 client,
                 List(
-                  new CaliMorningImpl(
-                    Settings.scheduledGreetings.morningGreetings
-                  ),
-                  new CaliEveningImpl(
-                    Settings.scheduledGreetings.eveningGreetings
-                  )
-                )
+                  Some(Settings.scheduledGreetings.morningGreetings)
+                    .filter(_.nonEmpty)
+                    .map(new CaliMorningImpl(_)),
+                  Some(Settings.scheduledGreetings.eveningGreetings)
+                    .filter(_.nonEmpty)
+                    .map(new CaliEveningImpl(_))
+                ).flatten
               ),
               name = "greeting-scheduler"
             )
