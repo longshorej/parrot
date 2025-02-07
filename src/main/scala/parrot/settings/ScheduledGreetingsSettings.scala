@@ -4,14 +4,23 @@ import java.time.DayOfWeek
 import scala.concurrent.duration._
 
 object ScheduledGreetingsSettings {
-  sealed trait GreetingType
+  sealed trait GreetingType {
+    def days: Set[DayOfWeek]
+  }
 
   object GreetingType {
 
-    /** Randomly between 8 and 10am pacific, a single greeting is picked according to the weighted
+    /** Randomly between 8am and 10am pacific, a single greeting is picked according to the weighted
       * greetings that are defined.
       */
-    case class CaliMorning(days: Set[DayOfWeek]) extends GreetingType
+    case class CaliMorning(override val days: Set[DayOfWeek])
+        extends GreetingType
+
+    /** Randomly between 11pm and 1am pacific, a single greeting is picked according to the weighted
+      * greetings that are defined.
+      */
+    case class CaliEvening(override val days: Set[DayOfWeek])
+        extends GreetingType
   }
 
   sealed trait GreetingContent
@@ -45,8 +54,8 @@ class ScheduledGreetingsSettings {
     */
   val tickInterval: FiniteDuration = 1.second
 
-  /** Defines the greetings for the application, organized by day or EveryDay. */
-  val greetings: Seq[Greeting[_]] = Seq(
+  /** Defines the morning greetings for the application, organized by day or EveryDay. */
+  val morningGreetings: Seq[Greeting[GreetingType.CaliMorning]] = Seq(
     // Every Day
     Seq[String](
       //"https://media.tenor.com/_l9zt0EOc-sAAAAC/girls.gif"
@@ -138,6 +147,82 @@ class ScheduledGreetingsSettings {
       Greeting(
         GreetingContent.Image(url),
         GreetingType.CaliMorning(Set(DayOfWeek.SATURDAY))
+      )
+    )
+  ).flatten
+
+  /** Defines the evening greetings for the application, organized by day or EveryDay. */
+  val eveningGreetings: Seq[Greeting[GreetingType.CaliEvening]] = Seq(
+    // Every Day
+    Seq(
+      // "http://urlhere.gif"
+    ).map(url =>
+      Greeting(
+        GreetingContent.Image(url),
+        GreetingType.CaliEvening(EveryDay)
+      )
+    ),
+    // Sundays
+    Seq(
+      // "http://urlhere.gif"
+    ).map(url =>
+      Greeting(
+        GreetingContent.Image(url),
+        GreetingType.CaliEvening(Set(DayOfWeek.SUNDAY))
+      )
+    ),
+    // Mondays
+    Seq(
+      // "http://urlhere.gif"
+    ).map(url =>
+      Greeting(
+        GreetingContent.Image(url),
+        GreetingType.CaliEvening(Set(DayOfWeek.MONDAY))
+      )
+    ),
+    // Tuesdays
+    Seq(
+      // "http://urlhere.gif"
+    ).map(url =>
+      Greeting(
+        GreetingContent.Image(url),
+        GreetingType.CaliEvening(Set(DayOfWeek.TUESDAY))
+      )
+    ),
+    // Wednesdays
+    Seq(
+      // "http://urlhere.gif"
+    ).map(url =>
+      Greeting(
+        GreetingContent.Image(url),
+        GreetingType.CaliEvening(Set(DayOfWeek.WEDNESDAY))
+      )
+    ),
+    // Thursdays
+    Seq(
+      // "http://urlhere.gif"
+    ).map(url =>
+      Greeting(
+        GreetingContent.Image(url),
+        GreetingType.CaliEvening(Set(DayOfWeek.THURSDAY))
+      )
+    ),
+    // Fridays
+    Seq(
+      // "http://urlhere.gif"
+    ).map(url =>
+      Greeting(
+        GreetingContent.Image(url),
+        GreetingType.CaliEvening(Set(DayOfWeek.FRIDAY))
+      )
+    ),
+    // Saturdays
+    Seq(
+      // "http://urlhere.gif"
+    ).map(url =>
+      Greeting(
+        GreetingContent.Image(url),
+        GreetingType.CaliEvening(Set(DayOfWeek.SATURDAY))
       )
     )
   ).flatten
