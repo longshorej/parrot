@@ -155,7 +155,22 @@ class ScheduledGreetingsSettings {
   val eveningGreetings: Seq[Greeting[GreetingType.CaliEvening]] = Seq(
     // Every Day
     Seq(
-      // "http://urlhere.gif"
+      "https://www.jasonlongshore.com/parrot/images/greetings/410714209-d8411d44-08a5-4702-acbd-7b34f057ed91.gif",
+      "https://www.jasonlongshore.com/parrot/images/greetings/410714209-d8411d44-08a5-4702-acbd-7b34f057ed91.gif",
+      "https://www.jasonlongshore.com/parrot/images/greetings/410714471-8287d0f5-ac04-4512-a478-132daa1b851c.gif",
+      "https://www.jasonlongshore.com/parrot/images/greetings/410717054-7fb6134f-6f9f-4448-9d56-617ded0883e3.gif",
+      "https://www.jasonlongshore.com/parrot/images/greetings/410717195-22ae9ae3-a66f-4908-a9ab-c237d3671433.gif",
+      "https://www.jasonlongshore.com/parrot/images/greetings/410718174-9f2f1022-a522-4399-8f65-42c01a541c04.gif",
+      "https://www.jasonlongshore.com/parrot/images/greetings/410718464-2e43428e-3817-4c6c-b5d9-a1e4149380ec.gif",
+      "https://www.jasonlongshore.com/parrot/images/greetings/410718695-d0cb84ef-4e37-4196-aa3f-8178eebe375a.gif",
+      "https://www.jasonlongshore.com/parrot/images/greetings/410718801-759c9ab2-ff2c-4026-855a-2f5404e51062.gif",
+      "https://www.jasonlongshore.com/parrot/images/greetings/410718858-7740214a-4833-43cf-8263-eb969d2601b8.gif",
+      "https://www.jasonlongshore.com/parrot/images/greetings/410719096-f48571e1-98bd-4012-9104-3319bf183764.gif",
+      "https://www.jasonlongshore.com/parrot/images/greetings/410719216-c4527769-e5bf-4b1c-9fe9-b3fc9c35b044.gif",
+      "https://www.jasonlongshore.com/parrot/images/greetings/410719416-5591c68c-a834-4ad6-a5d0-3842089afc75.gif",
+      "https://www.jasonlongshore.com/parrot/images/greetings/410719651-6a5f6097-ff31-4a8c-8fbd-732933880c20.gif",
+      "https://www.jasonlongshore.com/parrot/images/greetings/410719708-66b8a82e-6cff-43da-8d7a-eaaf75298150.gif",
+      "https://www.jasonlongshore.com/parrot/images/greetings/410720452-76898abb-263c-44c1-a950-37c2e0f8fc66.gif"
     ).map(url =>
       Greeting(
         GreetingContent.Image(url),

@@ -174,7 +174,8 @@ object MessageReactor {
                     )
 
                     client.sendTextToActive("starting new wordle game")(
-                      message.cache.current
+                      message.cache.current,
+                      context.executionContext
                     )
 
                     handle(
@@ -198,7 +199,7 @@ object MessageReactor {
 
                     client.sendTextToActive(
                       s"letter #${index + 1} is ${wordle.word.lift(index).fold("")(_.toString)}"
-                    )(message.cache.current)
+                    )(message.cache.current, context.executionContext)
 
                     handle(
                       client = client,
@@ -227,7 +228,8 @@ object MessageReactor {
 
                     if (result.forall(_ == evaluateWordle.Status.Correct)) {
                       client.sendTextToActive("you win, feels good man")(
-                        message.cache.current
+                        message.cache.current,
+                        context.executionContext
                       )
 
                       handle(
@@ -241,7 +243,8 @@ object MessageReactor {
                       client.sendTextToActive(
                         s"god ur bad (it was ${wordle.word})"
                       )(
-                        message.cache.current
+                        message.cache.current,
+                        context.executionContext
                       )
 
                       handle(
@@ -261,7 +264,8 @@ object MessageReactor {
                         .mkString("")
 
                       client.sendTextToActive(formattedResult)(
-                        message.cache.current
+                        message.cache.current,
+                        context.executionContext
                       )
                       // @TODO improve the format
 

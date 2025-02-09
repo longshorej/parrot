@@ -6,6 +6,7 @@ object Settings {
   val apiVersion: Int = 9
   val botToken: String = sys.env.getOrElse("PARROT_BOT_TOKEN", "xyz")
 
+  val dadJokerSettings: DadJokerSettings = new DadJokerSettings
   val reactions: ReactionsSettings = new ReactionsSettings
   val scheduledGreetings: ScheduledGreetingsSettings =
     new ScheduledGreetingsSettings
