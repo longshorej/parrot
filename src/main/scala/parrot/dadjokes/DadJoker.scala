@@ -5,7 +5,7 @@ import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.Behavior
 import parrot.impls.DailyThingSelector
 
-import java.time.DayOfWeek
+import java.time.{DayOfWeek, Instant}
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.FiniteDuration
 
@@ -53,7 +53,7 @@ object DadJoker {
         Behaviors
           .receiveMessage[Message] {
             case Message.Tick =>
-              val selectedJokes = jokeSelector.tick()
+              val selectedJokes = jokeSelector.tick(Instant.now())
 
               if (selectedJokes.nonEmpty) {
                 context.spawnAnonymous(DadJokeExecutor(client, selectedJokes))

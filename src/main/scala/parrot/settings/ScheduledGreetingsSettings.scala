@@ -4,6 +4,15 @@ import java.time.DayOfWeek
 import scala.concurrent.duration._
 
 object ScheduledGreetingsSettings {
+  object Images {
+    final val FdfForeshadowMorning =
+      "https://www.jasonlongshore.com/parrot/images/greetings/410713594-bbffcff5-5321-4c22-b89f-8fd9001275cc.gif"
+    final val FdfMorning =
+      "https://img1.picmix.com/output/pic/normal/3/5/4/6/11376453_150ef.gif"
+    final val FdfEvening =
+      "https://www.jasonlongshore.com/parrot/images/greetings/410715267-f973a67f-aa1f-414c-900b-0d9cfc88ae84.gif"
+  }
+
   sealed trait GreetingType {
     def days: Set[DayOfWeek]
   }
@@ -103,12 +112,13 @@ class ScheduledGreetingsSettings {
     ),
     // Wednesdays
     Seq(
-      "https://i.giphy.com/media/uLgd9dOYWpnu5WkShY/giphy.gif",
-      "https://i.giphy.com/media/YjKWzP8n97YisqCWPK/giphy.gif",
-      "https://media.tenor.com/p1ME7s6S_7sAAAAC/have-an-awesome-wednesday-stay-safe-and-blessed.gif",
-      "https://img1.picmix.com/output/pic/normal/9/8/0/5/10935089_13a7f.gif",
-      "https://img1.picmix.com/output/pic/normal/7/4/2/2/6592247_181a4.gif",
-      "https://img1.picmix.com/output/pic/normal/7/8/8/7/11397887_80bdb.gif"
+      //"https://i.giphy.com/media/uLgd9dOYWpnu5WkShY/giphy.gif",
+      //"https://i.giphy.com/media/YjKWzP8n97YisqCWPK/giphy.gif",
+      //"https://media.tenor.com/p1ME7s6S_7sAAAAC/have-an-awesome-wednesday-stay-safe-and-blessed.gif",
+      //"https://img1.picmix.com/output/pic/normal/9/8/0/5/10935089_13a7f.gif",
+      //"https://img1.picmix.com/output/pic/normal/7/4/2/2/6592247_181a4.gif",
+      //"https://img1.picmix.com/output/pic/normal/7/8/8/7/11397887_80bdb.gif",
+      Images.FdfForeshadowMorning
     ).map(url =>
       Greeting(
         GreetingContent.Image(url),
@@ -132,7 +142,7 @@ class ScheduledGreetingsSettings {
       "https://media.tenor.com/3pS3gpKJsLIAAAAC/carlton-dance.gif",
       "https://media.tenor.com/Zf45U-rHMgkAAAAd/friday-good-morning.gif",
       "https://www.ludlowcub.com/wp-content/uploads/2011/04/rebecca-black-friday.jpg",
-      "https://img1.picmix.com/output/pic/normal/3/5/4/6/11376453_150ef.gif",
+      //Images.FdfMorning, // we force it via takeover
       "https://img1.picmix.com/output/pic/normal/6/7/0/8/10848076_3dc0f.gif"
     ).map(url =>
       Greeting(
@@ -225,6 +235,7 @@ class ScheduledGreetingsSettings {
     // Fridays
     Seq(
       // "http://urlhere.gif"
+      //Images.FdfEvening // we force it via takeover
     ).map(url =>
       Greeting(
         GreetingContent.Image(url),
