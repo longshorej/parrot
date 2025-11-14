@@ -168,6 +168,13 @@ object MessageReactor {
                     )
 
                   case CrapProtocol.KeepOnRolling =>
+                    client.requestsHelper
+                      .run(
+                        message.message
+                          .createReaction(CrapProtocol.KeepOnRollingResponse)
+                      )(
+                        message.cache.current
+                      )
                     greetingScheduler ! GreetingScheduler.Message.KeepOnRolling
                     Behaviors.same
 

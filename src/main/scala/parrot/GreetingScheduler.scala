@@ -3,13 +3,14 @@ package parrot
 import ackcord.{APIMessage, CacheState, DiscordClient}
 import akka.actor.typed.{Behavior, PostStop}
 import akka.actor.typed.scaladsl.Behaviors
+import com.typesafe.scalalogging.StrictLogging
 import parrot.impls.{DailyThingSelector, GreetingTypeImpl}
 import parrot.settings.ScheduledGreetingsSettings.GreetingContent
 import parrot.settings.{ScheduledGreetingsSettings, Settings}
 
 import java.time.{DayOfWeek, Instant}
 
-object GreetingScheduler {
+object GreetingScheduler extends StrictLogging {
   sealed trait Message
 
   object Message {

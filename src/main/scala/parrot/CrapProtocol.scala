@@ -12,5 +12,6 @@ object CrapProtocol {
 
   val StopResponse: String = "☹️"
   val StartResponse: String = "\uD83D\uDE0A"
+  val KeepOnRollingResponse: String = "\uD83D\uDE09"
 
 }
