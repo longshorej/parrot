@@ -4,7 +4,7 @@ import ackcord.{APIMessage, CacheSnapshot, DiscordClient}
 import ackcord.data.{MessageId, RawSnowflake, TextChannelId}
 import ackcord.requests.{CreateMessage, CreateMessageData}
 import ackcord.syntax.MessageSyntax
-import akka.actor.typed.{Behavior, PostStop}
+import akka.actor.typed.{ActorRef, Behavior, PostStop}
 import akka.actor.typed.scaladsl.Behaviors
 import parrot.logic.evaluateWordle.Status
 import parrot.logic.{evaluateWordle, getReactions}
@@ -34,8 +34,12 @@ object MessageReactor {
       guesses: Seq[Vector[evaluateWordle.Status]]
   )
 
-  def apply(client: DiscordClient): Behavior[Message] =
+  def apply(
+      greetingScheduler: ActorRef[GreetingScheduler.Message],
+      client: DiscordClient
+  ): Behavior[Message] =
     handle(
+      greetingScheduler = greetingScheduler,
       client = client,
       waiting = Set.empty,
       active = true,
@@ -45,6 +49,7 @@ object MessageReactor {
 
   // @TODO active should be per server, not per instance
   private def handle(
+      greetingScheduler: ActorRef[GreetingScheduler.Message],
       client: DiscordClient,
       waiting: Set[MessageId],
       active: Boolean,
@@ -82,6 +87,7 @@ object MessageReactor {
 
           case Message.Reacted(message, Nil) =>
             handle(
+              greetingScheduler = greetingScheduler,
               client = client,
               waiting = waiting - message.message.id,
               active = active,
@@ -110,6 +116,7 @@ object MessageReactor {
                   }
 
                 handle(
+                  greetingScheduler = greetingScheduler,
                   client = client,
                   waiting = waiting + message.message.id,
                   active = active,
@@ -133,6 +140,7 @@ object MessageReactor {
                       )
 
                     handle(
+                      greetingScheduler = greetingScheduler,
                       client = client,
                       waiting = waiting,
                       active = true,
@@ -151,12 +159,17 @@ object MessageReactor {
                       )
 
                     handle(
+                      greetingScheduler = greetingScheduler,
                       client = client,
                       waiting = waiting,
                       active = false,
                       maybeWordle = maybeWordle,
                       last = Some(message.message.id.asString)
                     )
+
+                  case CrapProtocol.KeepOnRolling =>
+                    greetingScheduler ! GreetingScheduler.Message.KeepOnRolling
+                    Behaviors.same
 
                   case CrapProtocol.WordleNew if maybeWordle.isEmpty =>
                     // @TODO schedule a timeout
@@ -179,6 +192,7 @@ object MessageReactor {
                     )
 
                     handle(
+                      greetingScheduler = greetingScheduler,
                       client = client,
                       waiting = waiting,
                       active = active,
@@ -202,6 +216,7 @@ object MessageReactor {
                     )(message.cache.current, context.executionContext)
 
                     handle(
+                      greetingScheduler = greetingScheduler,
                       client = client,
                       waiting = waiting,
                       active = active,
@@ -233,6 +248,7 @@ object MessageReactor {
                       )
 
                       handle(
+                        greetingScheduler = greetingScheduler,
                         client = client,
                         waiting = waiting,
                         active = active,
@@ -248,6 +264,7 @@ object MessageReactor {
                       )
 
                       handle(
+                        greetingScheduler = greetingScheduler,
                         client = client,
                         waiting = waiting,
                         active = active,
@@ -270,6 +287,7 @@ object MessageReactor {
                       // @TODO improve the format
 
                       handle(
+                        greetingScheduler = greetingScheduler,
                         client = client,
                         waiting = waiting,
                         active = active,

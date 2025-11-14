@@ -14,6 +14,7 @@ object GreetingScheduler {
 
   object Message {
     case object Tick extends Message
+    case object KeepOnRolling extends Message
     case class DiscordApiMessageReceived(message: APIMessage) extends Message
   }
 
@@ -97,6 +98,12 @@ object GreetingScheduler {
                 behavior(
                   maybeCacheState = Some(message.cache),
                   fdfTakeover = fdfTakeover
+                )
+
+              case Message.KeepOnRolling =>
+                behavior(
+                  maybeCacheState = maybeCacheState,
+                  fdfTakeover = true
                 )
             }
             .receiveSignal {

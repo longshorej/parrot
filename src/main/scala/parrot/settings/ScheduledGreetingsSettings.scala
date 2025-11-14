@@ -112,12 +112,12 @@ class ScheduledGreetingsSettings {
     ),
     // Wednesdays
     Seq(
-      //"https://i.giphy.com/media/uLgd9dOYWpnu5WkShY/giphy.gif",
-      //"https://i.giphy.com/media/YjKWzP8n97YisqCWPK/giphy.gif",
-      //"https://media.tenor.com/p1ME7s6S_7sAAAAC/have-an-awesome-wednesday-stay-safe-and-blessed.gif",
-      //"https://img1.picmix.com/output/pic/normal/9/8/0/5/10935089_13a7f.gif",
-      //"https://img1.picmix.com/output/pic/normal/7/4/2/2/6592247_181a4.gif",
-      //"https://img1.picmix.com/output/pic/normal/7/8/8/7/11397887_80bdb.gif",
+      "https://i.giphy.com/media/uLgd9dOYWpnu5WkShY/giphy.gif",
+      "https://i.giphy.com/media/YjKWzP8n97YisqCWPK/giphy.gif",
+      "https://media.tenor.com/p1ME7s6S_7sAAAAC/have-an-awesome-wednesday-stay-safe-and-blessed.gif",
+      "https://img1.picmix.com/output/pic/normal/9/8/0/5/10935089_13a7f.gif",
+      "https://img1.picmix.com/output/pic/normal/7/4/2/2/6592247_181a4.gif",
+      "https://img1.picmix.com/output/pic/normal/7/8/8/7/11397887_80bdb.gif",
       Images.FdfForeshadowMorning
     ).map(url =>
       Greeting(

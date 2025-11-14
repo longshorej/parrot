@@ -8,6 +8,7 @@ object CrapProtocol {
   val WordleQuit: String = "!wordle quit"
   val Start: String = "!parrot-start"
   val Stop: String = "!parrot-stop"
+  val KeepOnRolling: String = "!keep-on-rolling"
 
   val StopResponse: String = "☹️"
   val StartResponse: String = "\uD83D\uDE0A"

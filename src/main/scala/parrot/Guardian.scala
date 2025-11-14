@@ -62,29 +62,29 @@ object Guardian extends StrictLogging {
               )
             )
 
-            context.watch(
-              context.spawn(
-                behavior = MessageReactor(client),
-                name = "reactor"
-              )
+            val greetingScheduler = context.spawn(
+              behavior = GreetingScheduler(
+                client,
+                List(
+                  Some(Settings.scheduledGreetings.morningGreetings)
+                    .filter(_.nonEmpty)
+                    .map(new CaliMorningImpl(_)),
+                  Some(Settings.scheduledGreetings.eveningGreetings)
+                    .filter(_.nonEmpty)
+                    .map(new CaliEveningImpl(_))
+                ).flatten
+              ),
+              name = "greeting-scheduler"
             )
 
             context.watch(
               context.spawn(
-                behavior = GreetingScheduler(
-                  client,
-                  List(
-                    Some(Settings.scheduledGreetings.morningGreetings)
-                      .filter(_.nonEmpty)
-                      .map(new CaliMorningImpl(_)),
-                    Some(Settings.scheduledGreetings.eveningGreetings)
-                      .filter(_.nonEmpty)
-                      .map(new CaliEveningImpl(_))
-                  ).flatten
-                ),
-                name = "greeting-scheduler"
+                behavior = MessageReactor(greetingScheduler, client),
+                name = "reactor"
               )
             )
+
+            context.watch(greetingScheduler)
 
             Behaviors.same
         }
