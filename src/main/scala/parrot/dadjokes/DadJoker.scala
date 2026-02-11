@@ -55,7 +55,7 @@ object DadJoker {
             case Message.Tick =>
               val selectedJokes = jokeSelector.tick(Instant.now())
 
-              if (selectedJokes.nonEmpty) {
+              if (selectedJokes.nonEmpty && false) {
                 context.spawnAnonymous(DadJokeExecutor(client, selectedJokes))
               }
 

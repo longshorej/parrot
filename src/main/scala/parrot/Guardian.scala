@@ -7,6 +7,7 @@ import akka.actor.typed.scaladsl.Behaviors
 import com.typesafe.scalalogging.StrictLogging
 import parrot.dadjokes.DadJoker
 import parrot.impls.GreetingTypeImpl.{CaliEveningImpl, CaliMorningImpl}
+import parrot.ircbridge.IrcBridge
 import parrot.settings.Settings
 
 import scala.concurrent.ExecutionContext
@@ -62,6 +63,18 @@ object Guardian extends StrictLogging {
               )
             )
 
+            val ircBridge =               context.spawn(
+              behavior = IrcBridge(
+                discordChannelId = Settings.textChannelId,
+                ircHost = Settings.ircHost,
+                ircPort = Settings.ircPort,
+                ircChannel = Settings.ircChannel
+              ),
+              name = "irc-bridge"
+            )
+
+            context.watch(ircBridge)
+
             val greetingScheduler = context.spawn(
               behavior = GreetingScheduler(
                 client,
@@ -85,6 +98,10 @@ object Guardian extends StrictLogging {
             )
 
             context.watch(greetingScheduler)
+
+            // @TODO have a generic actor that consumes all incoming discord messages, hook it up to the thing below
+
+            ircBridge ! IrcBridge.Message.AddSubscriber()
 
             Behaviors.same
         }
