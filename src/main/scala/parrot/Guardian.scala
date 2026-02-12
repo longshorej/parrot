@@ -52,18 +52,16 @@ object Guardian extends StrictLogging {
           case Message.ClientCreated(client) =>
             client.login()
 
-            context.watch(
-              context.spawn(
-                behavior = DadJoker(
-                  client,
-                  Settings.dadJokerSettings.jokes,
-                  Settings.dadJokerSettings.tickInterval
-                ),
-                name = "dad-joker"
-              )
+            val dadJoker = context.spawn(
+              behavior = DadJoker(
+                client,
+                Settings.dadJokerSettings.jokes,
+                Settings.dadJokerSettings.tickInterval
+              ),
+              name = "dad-joker"
             )
 
-            val ircBridge =               context.spawn(
+            val ircBridge = context.spawn(
               behavior = IrcBridge(
                 discordChannelId = Settings.textChannelId,
                 ircHost = Settings.ircHost,
@@ -72,8 +70,6 @@ object Guardian extends StrictLogging {
               ),
               name = "irc-bridge"
             )
-
-            context.watch(ircBridge)
 
             val greetingScheduler = context.spawn(
               behavior = GreetingScheduler(
@@ -90,18 +86,23 @@ object Guardian extends StrictLogging {
               name = "greeting-scheduler"
             )
 
-            context.watch(
-              context.spawn(
-                behavior = MessageReactor(greetingScheduler, client),
-                name = "reactor"
-              )
+            val messageReactor = context.spawn(
+              behavior = MessageReactor(greetingScheduler, client),
+              name = "reactor"
             )
 
+            context.watch(dadJoker)
+            context.watch(ircBridge)
             context.watch(greetingScheduler)
+            context.watch(messageReactor)
 
-            // @TODO have a generic actor that consumes all incoming discord messages, hook it up to the thing below
+            ircBridge ! IrcBridge.Message.Subscribe(message =>
+              messageReactor ! MessageReactor.Message.IssueReceived(message)
+            )
 
-            ircBridge ! IrcBridge.Message.AddSubscriber()
+            messageReactor ! MessageReactor.Message.Subscribe(message =>
+              ircBridge ! IrcBridge.Message.IssueReceived(message)
+            )
 
             Behaviors.same
         }

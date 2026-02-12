@@ -1,7 +1,7 @@
 package parrot.ircbridge
 
 import akka.Done
-import akka.actor.typed.{ActorRef, ActorSystem, Behavior}
+import akka.actor.typed.{ActorSystem, Behavior}
 import akka.actor.typed.scaladsl._
 import akka.stream.{OverflowStrategy, QueueOfferResult}
 import akka.stream.scaladsl.{Flow, Framing, Keep, Sink, Source, Tcp}
@@ -10,7 +10,6 @@ import com.typesafe.scalalogging.StrictLogging
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
-import scala.concurrent.impl.Promise
 import scala.util.{Failure, Success}
 
 object IrcBridge extends StrictLogging {
@@ -24,8 +23,13 @@ object IrcBridge extends StrictLogging {
     case object Start extends Message
     case object Stop extends Message
 
-    /** I wish to receive all of your IRC messages that you've received */
-    case class AddSubscriber(replyTo: ActorRef[CrapIrcProtocol.Incoming.ChannelPrivmsg]) extends Message
+    /** I wish to receive a plain text encoding of incoming messages */
+    case class Subscribe(replyTo: String => Unit) extends Message
+
+    case class Received(channel: String, text: String, nick: Option[String])
+        extends Message
+
+    case class IssueReceived(message: String) extends Message
   }
 
   def apply(
@@ -42,12 +46,37 @@ object IrcBridge extends StrictLogging {
 
       def encode(line: String): ByteString = ByteString(s"$line\r\n")
 
-      def connect(): (Future[Tcp.OutgoingConnection], Future[Done]) = {
+      def connect(): (
+          CrapIrcProtocol.Outgoing => Future[Done],
+          Future[Tcp.OutgoingConnection],
+          Future[Done]
+      ) = {
         val tcp = Tcp(context.system).outgoingConnection(ircHost, ircPort)
 
         val (outQueue, outSource) = Source
-          .queue[ByteString](bufferSize = 10240, overflowStrategy = OverflowStrategy.backpressure)
+          .queue[ByteString](
+            bufferSize = 10240,
+            overflowStrategy = OverflowStrategy.backpressure
+          )
           .preMaterialize()
+
+        val enqueue = (outgoing: CrapIrcProtocol.Outgoing) =>
+          outQueue
+            .offer(encode(outgoing.render))
+            .flatMap {
+              case QueueOfferResult.Enqueued =>
+                Future.successful(Done)
+              case QueueOfferResult.Dropped =>
+                Future.failed(
+                  new IllegalStateException(
+                    "an element was dropped; check queue sizes"
+                  )
+                )
+              case QueueOfferResult.Failure(cause) =>
+                Future.failed(cause)
+              case QueueOfferResult.QueueClosed =>
+                Future.failed(new IllegalStateException("queue is closed"))
+            }
 
         val protocol = Flow[ByteString]
           .via(
@@ -78,14 +107,16 @@ object IrcBridge extends StrictLogging {
             case Some(CrapIrcProtocol.Incoming.Ping(token1, token2)) =>
               Some(CrapIrcProtocol.Outgoing.Pong(token1, token2))
 
-            case Some(CrapIrcProtocol.Incoming.ChannelPrivmsg(_, _, _)) =>
-              // @TODO forward to discord
+            case Some(
+                  CrapIrcProtocol.Incoming.ChannelPrivmsg(channel, text, nick)
+                ) =>
+              context.self ! Message.Received(channel, text, nick)
 
               None
           }
-          .collect { case Some(outgoing) => encode(outgoing.render) }
+          .collect { case Some(outgoing) => outgoing }
 
-        Source(
+        val (connected, completed) = Source(
           List(
             CrapIrcProtocol.Outgoing.Nick(nick = IrcUsernameAndNick),
             CrapIrcProtocol.Outgoing.User(
@@ -93,26 +124,19 @@ object IrcBridge extends StrictLogging {
               mode = "0",
               unused = "*",
               realname = IrcUsernameAndNick
-            )
+            ),
+            CrapIrcProtocol.Outgoing.Mode(IrcUsernameAndNick, "+x")
           )
         )
           .map(m => encode(m.render))
           .merge(outSource)
           .viaMat(tcp)(Keep.right)
           .via(protocol)
-          .mapAsync(1)(outQueue.offer)
-          .mapAsync(1) {
-            case QueueOfferResult.Enqueued =>
-              Future.successful(Done)
-            case QueueOfferResult.Dropped =>
-              Future.failed(new IllegalStateException("an element was dropped; check queue sizes"))
-            case QueueOfferResult.Failure(cause) =>
-              Future.failed(cause)
-            case QueueOfferResult.QueueClosed =>
-              Future.failed(new IllegalStateException("queue is closed"))
-          }
+          .mapAsync(1)(enqueue)
           .toMat(Sink.ignore)(Keep.both)
           .run()
+
+        (enqueue, connected, completed)
       }
 
       def scheduleReconnect(): Unit =
@@ -120,52 +144,66 @@ object IrcBridge extends StrictLogging {
 
       context.self ! Message.Start
 
-      Behaviors.receiveMessage {
-        case Message.Start =>
-          val (connected, completed) = connect()
+      def running(
+          subscribers: List[String => Unit],
+          enqueue: CrapIrcProtocol.Outgoing => Future[Done]
+      ): Behavior[Message] =
+        Behaviors.receiveMessage {
+          case Message.Received(_, text, nick) =>
+            val formatted = nick.fold(text)(n => s"<$n> $text")
 
-          connected.onComplete {
-            case Success(connection) =>
-              logger.info(
-                s"connected to irc server, host=$ircHost, port=$ircPort, localAddress=${connection.localAddress} remoteAddress=${connection.remoteAddress}"
-              )
+            subscribers.foreach(_.apply(formatted))
 
-            case Failure(cause) =>
-              // do not reconnect here (connected) -- completed success/failure will take care of that
-              logger.warn(
-                s"disconnected from irc server, host=$ircHost, port=$ircPort",
-                cause
-              )
-          }
+            Behaviors.same
 
-          completed.onComplete {
-            case Success(Done) =>
-              logger.info(
-                s"disconnected from irc server (successfully), reconnecting in a bit"
-              )
+          case Message.Start =>
+            val (enqueue, connected, completed) = connect()
 
-              scheduleReconnect()
+            connected.onComplete {
+              case Success(connection) =>
+                logger.info(
+                  s"connected to irc server, host=$ircHost, port=$ircPort, localAddress=${connection.localAddress} remoteAddress=${connection.remoteAddress}"
+                )
 
-            case Failure(cause) =>
-              logger.warn(
-                s"disconnected from irc server (unsuccessfully), reconnecting in a bit",
-                cause
-              )
+              case Failure(cause) =>
+                // do not reconnect here (connected) -- completed success/failure will take care of that
+                logger.warn(
+                  s"disconnected from irc server, host=$ircHost, port=$ircPort",
+                  cause
+                )
+            }
 
-              scheduleReconnect()
-          }
+            completed.onComplete {
+              case Success(Done) =>
+                logger.info(
+                  s"disconnected from irc server (successfully), reconnecting in a bit"
+                )
 
-          Behaviors.same
+                scheduleReconnect()
 
-        case Message.Stop =>
-          Behaviors.stopped
+              case Failure(cause) =>
+                logger.warn(
+                  s"disconnected from irc server (unsuccessfully), reconnecting in a bit",
+                  cause
+                )
 
-        case Message.Forward(message) =>
+                scheduleReconnect()
+            }
 
+            running(subscribers, enqueue)
 
-          // @TODO track the current outQueue, send this there
+          case Message.Stop =>
+            Behaviors.stopped
 
-          Behaviors.same
-      }
+          case Message.Subscribe(replyTo) =>
+            running(replyTo :: subscribers, enqueue)
+
+          case Message.IssueReceived(message) =>
+            enqueue(CrapIrcProtocol.Outgoing.Privmsg(ircChannel, message))
+
+            Behaviors.same
+        }
+
+      running(List.empty, _ => Future.successful(Done))
     }
 }

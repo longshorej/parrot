@@ -9,6 +9,7 @@ object CrapProtocol {
   val Start: String = "!parrot-start"
   val Stop: String = "!parrot-stop"
   val KeepOnRolling: String = "!keep-on-rolling"
+  val Users: String = "!users"
 
   val StopResponse: String = "☹️"
   val StartResponse: String = "\uD83D\uDE0A"

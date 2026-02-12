@@ -84,6 +84,10 @@ object CrapIrcProtocol {
         }
     }
 
+    final case class Mode(target: String, flags: String) extends Outgoing {
+      override def render: String = s"MODE $target $flags"
+    }
+
     final case class Nick(nick: String) extends Outgoing {
       override def render: String = s"NICK $nick"
     }
