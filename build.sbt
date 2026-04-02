@@ -24,6 +24,7 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka"          %% "akka-stream"       % Versions.Akka,
   "com.typesafe.akka"          %% "akka-stream-typed" % Versions.Akka,
   "com.typesafe.akka"          %% "akka-http"         % Versions.AkkaHttp,
+  "com.typesafe.akka"          %% "akka-http-caching" % Versions.AkkaHttp,
   "io.spray"                   %% "spray-json"        % Versions.SprayJson,
   "net.katsstuff"              %% "ackcord"           % Versions.Ackord,
 

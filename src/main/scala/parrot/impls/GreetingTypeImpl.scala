@@ -6,8 +6,10 @@ import parrot.settings.ScheduledGreetingsSettings.{
   GreetingType
 }
 
+import java.time.Instant
+
 sealed abstract class GreetingTypeImpl {
-  def tick(): Seq[GreetingContent]
+  def tick(now: Instant): Seq[GreetingContent]
 }
 
 object GreetingTypeImpl {
@@ -32,8 +34,9 @@ object GreetingTypeImpl {
         DailyThingSelector.ThingDescriptor(g.greetingType.days, g.toString)
       )
 
-    override def tick(): Seq[GreetingContent] =
-      greetingSelector.tick().map(_.content).toList
+    override def tick(now: Instant): Seq[GreetingContent] = {
+      greetingSelector.tick(now).map(_.content).toList
+    }
   }
 
   object CaliEveningImpl {
@@ -57,7 +60,7 @@ object GreetingTypeImpl {
         DailyThingSelector.ThingDescriptor(g.greetingType.days, g.toString)
       )
 
-    override def tick(): Seq[GreetingContent] =
-      greetingSelector.tick().map(_.content).toList
+    override def tick(now: Instant): Seq[GreetingContent] =
+      greetingSelector.tick(now).map(_.content).toList
   }
 }

@@ -14,6 +14,8 @@ object DailyThingSelector {
     * a string representation.
     */
   case class ThingDescriptor(days: Set[DayOfWeek], show: String)
+
+  val zoneId: ZoneId = ZoneId.of("America/Los_Angeles")
 }
 
 /** [[DailyThingSelector]] randomly selects some things once per day during a specified date
@@ -32,12 +34,10 @@ class DailyThingSelector[A](
 ) extends StrictLogging {
   import DailyThingSelector._
 
-  private val zoneId = ZoneId.of("America/Los_Angeles")
   private var nextRun = Option.empty[Instant]
   private var previousThings = Set.empty[A]
 
-  def tick(): IndexedSeq[A] = {
-    val now = Instant.now()
+  def tick(now: Instant): IndexedSeq[A] = {
     val nowZoned = now.atZone(zoneId)
     val nowDate = nowZoned.toLocalDate
 

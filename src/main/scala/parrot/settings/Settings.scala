@@ -18,5 +18,9 @@ object Settings {
     Fa
   }
 
+  val ircHost = "Prothid.NY.US.GameSurge.Net"
+  val ircPort = 6660
+  val ircChannel = "#fatalattraction"
+
   val wordle: WordleSettings = new WordleSettings
 }

@@ -3,15 +3,19 @@ package parrot
 import ackcord.{APIMessage, CacheState, DiscordClient}
 import akka.actor.typed.{Behavior, PostStop}
 import akka.actor.typed.scaladsl.Behaviors
-import parrot.impls.GreetingTypeImpl
+import com.typesafe.scalalogging.StrictLogging
+import parrot.impls.{DailyThingSelector, GreetingTypeImpl}
 import parrot.settings.ScheduledGreetingsSettings.GreetingContent
-import parrot.settings.Settings
+import parrot.settings.{ScheduledGreetingsSettings, Settings}
 
-object GreetingScheduler {
+import java.time.{DayOfWeek, Instant}
+
+object GreetingScheduler extends StrictLogging {
   sealed trait Message
 
   object Message {
     case object Tick extends Message
+    case object KeepOnRolling extends Message
     case class DiscordApiMessageReceived(message: APIMessage) extends Message
   }
 
@@ -31,16 +35,49 @@ object GreetingScheduler {
           Settings.scheduledGreetings.tickInterval
         )
 
-        def behavior(maybeCacheState: Option[CacheState]): Behavior[Message] =
+        def behavior(
+            maybeCacheState: Option[CacheState],
+            fdfTakeover: Boolean
+        ): Behavior[Message] =
           Behaviors
             .receiveMessage[Message] {
               case Message.Tick =>
+                val now = Instant.now()
+                val dayOfWeek =
+                  now.atZone(DailyThingSelector.zoneId).getDayOfWeek
+                val isFriday = dayOfWeek == DayOfWeek.FRIDAY
+
+                var nextFdfTakeover = fdfTakeover
+
                 for {
                   cacheState <- maybeCacheState
                   greetingTypeImpl <- greetingTypeImpls
-                  message <- greetingTypeImpl.tick()
+                  message <- greetingTypeImpl.tick(now)
                 } message match {
-                  case GreetingContent.Image(url) =>
+                  case GreetingContent.Image(rawUrl) =>
+                    val url = greetingTypeImpl match {
+                      case _: GreetingTypeImpl.CaliMorningImpl
+                          if rawUrl == ScheduledGreetingsSettings.Images.FdfForeshadowMorning =>
+                        nextFdfTakeover = true
+
+                        rawUrl
+
+                      case _: GreetingTypeImpl.CaliMorningImpl
+                          if fdfTakeover && isFriday =>
+                        // remain fdfTakeover until the evening
+
+                        ScheduledGreetingsSettings.Images.FdfMorning
+
+                      case _: GreetingTypeImpl.CaliEveningImpl
+                          if fdfTakeover && isFriday =>
+                        nextFdfTakeover = false
+
+                        ScheduledGreetingsSettings.Images.FdfEvening
+
+                      case _ =>
+                        rawUrl
+                    }
+
                     client.sendImageToActive(url)(
                       cacheState.current,
                       context.executionContext
@@ -53,10 +90,22 @@ object GreetingScheduler {
                     )
                 }
 
-                Behaviors.same
+                behavior(
+                  maybeCacheState = maybeCacheState,
+                  fdfTakeover = nextFdfTakeover
+                )
 
               case Message.DiscordApiMessageReceived(message) =>
-                behavior(Some(message.cache))
+                behavior(
+                  maybeCacheState = Some(message.cache),
+                  fdfTakeover = fdfTakeover
+                )
+
+              case Message.KeepOnRolling =>
+                behavior(
+                  maybeCacheState = maybeCacheState,
+                  fdfTakeover = true
+                )
             }
             .receiveSignal {
               case (_, _: PostStop) =>
@@ -65,7 +114,7 @@ object GreetingScheduler {
                 Behaviors.same
             }
 
-        behavior(None)
+        behavior(maybeCacheState = None, fdfTakeover = false)
       }
     }
 }
